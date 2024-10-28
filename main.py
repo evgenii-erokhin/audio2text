@@ -1,14 +1,13 @@
 import logging
 import os
 
+import whisper
+from dotenv import load_dotenv
 from pydub import AudioSegment
 from pydub.exceptions import CouldntDecodeError
-from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 from telegram.error import TelegramError
-import whisper
-
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 load_dotenv()
 
@@ -16,10 +15,23 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 OGG_PATH = os.path.join(BASE_DIR, 'voice', 'oog', 'voice_note.ogg')
 WAV_PATH = os.path.join(BASE_DIR, 'voice', 'wav', 'voice_note.wav')
-MODEL='turbo'
+MODEL = 'turbo'
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE)-> None:
+def create_dirs() -> None:
+    """
+    Создает директории для хранения аудио сообщений.
+
+    Перед началом транскрибирования аудио в текст создаются директории по пути:
+    ./voice/oog; ./voice/wav для хранения  аудио файлов
+
+    :return: None
+    """
+    os.makedirs(os.path.dirname(OGG_PATH), exist_ok=True)
+    os.makedirs(os.path.dirname(WAV_PATH), exist_ok=True)
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Обработчик команды /start, отправляющий приветственное сообщение пользователю.
 
@@ -34,7 +46,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE)-> None:
     )
 
 
-async def get_voice_message(update: Update, context: ContextTypes.DEFAULT_TYPE)-> None:
+async def get_voice_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Обрабатывает голосовые сообщения отправленные в чат, сохраняя их локально и транскрибируя в текст.
 
@@ -70,7 +82,7 @@ async def get_voice_message(update: Update, context: ContextTypes.DEFAULT_TYPE)-
         cleanup_files(OGG_PATH, WAV_PATH)
 
 
-def ogg_to_wav()-> str:
+def ogg_to_wav() -> str:
     """
     Конвертирует аудиофайл из формата OGG в WAV с монофоническим звуком.
 
@@ -99,7 +111,7 @@ def ogg_to_wav()-> str:
         raise os_err
 
 
-def audio_to_text()-> str:
+def audio_to_text() -> str:
     """
     Транскрибирует аудиофайл в формате WAV в текст.
 
@@ -123,7 +135,7 @@ def audio_to_text()-> str:
         raise fnf_err
     except RuntimeError as runtime_err:
         logging.error(f'Runtime error during Whisper processing: {runtime_err}')
-        raise  runtime_err
+        raise runtime_err
     except ValueError as value_err:
         logging.error(f'Value error during model invocation: {value_err}')
         raise value_err
@@ -150,13 +162,16 @@ def cleanup_files(*file_paths):
             raise error
 
 
-if __name__ == '__main__':
+def main() -> None:
     logging.basicConfig(
         level=logging.DEBUG,
         filename='main.log',
         filemode='w',
         format='%(asctime)s - %(levelname)s - %(message)s - %(name)s'
     )
+
+    create_dirs()
+
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
     starting = CommandHandler('start', start)
@@ -168,3 +183,7 @@ if __name__ == '__main__':
     application.add_handler(chat_voice)
 
     application.run_polling()
+
+
+if __name__ == '__main__':
+    main()
