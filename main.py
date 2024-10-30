@@ -71,6 +71,7 @@ async def get_voice_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             chat_id=chat_id,
             text=f'Голосовое сообщение конвертируется. Пожалуйста, ожидайте, это может занять некоторое время...'
         )
+        logging.info('voice message successfully sended')
         await context.bot.send_message(
             chat_id=chat_id,
             text=f'Голосовое сообщение: "{audio_to_text()}"'
@@ -164,6 +165,7 @@ def cleanup_files(*file_paths):
 
 def main() -> None:
     logging.basicConfig(
+        encoding='utf-8',
         level=logging.DEBUG,
         filename='main.log',
         filemode='w',
