@@ -167,7 +167,7 @@ def main() -> None:
     logging.basicConfig(
         encoding='utf-8',
         level=logging.DEBUG,
-        filename='main.log',
+        filename='./logs/main.log',
         filemode='w',
         format='%(asctime)s - %(levelname)s - %(message)s - %(name)s'
     )

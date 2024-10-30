@@ -4,3 +4,4 @@ services:
   audio_to_text:
     build: ./
     env_file: .env
+    restart: unless-stopped
