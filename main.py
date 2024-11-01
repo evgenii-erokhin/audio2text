@@ -12,10 +12,10 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, Messa
 load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+MODEL = os.getenv('MODEL')
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 OGG_PATH = os.path.join(BASE_DIR, 'voice', 'oog', 'voice_note.ogg')
 WAV_PATH = os.path.join(BASE_DIR, 'voice', 'wav', 'voice_note.wav')
-MODEL = 'turbo'
 
 
 def create_dirs() -> None:
