@@ -42,7 +42,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     await context.bot.send_message(
         chat_id=chat_id,
-        text='Транскрибирую ваш войс в текст.'
+        text='Привет! Пришли мне войс или добавь в чат, и я переведу голосовое сообщение в текст.'
     )
 
 
@@ -65,17 +65,26 @@ async def get_voice_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     """
     chat_id = update.effective_chat.id
     try:
+
         file = await context.bot.get_file(update.message.voice.file_id)
         await file.download_to_drive(custom_path=OGG_PATH)
-        await context.bot.send_message(
+        conversion_message = await context.bot.send_message(
             chat_id=chat_id,
             text=f'Голосовое сообщение конвертируется. Пожалуйста, ожидайте, это может занять некоторое время...'
         )
-        logging.info('voice message successfully sended')
-        await context.bot.send_message(
+
+        transcription_text = audio_to_text()
+        if update.effective_message.forward_origin.sender_user.first_name:
+            sender=update.effective_message.forward_origin.sender_user.first_name
+        else:
+            sender = update.effective_chat.first_name
+
+        await context.bot.edit_message_text(
             chat_id=chat_id,
-            text=f'Голосовое сообщение: "{audio_to_text()}"'
+            message_id=conversion_message.message_id,
+            text=f'Голосовое сообщение от пользователя {sender}: \n\n"{transcription_text}"'
         )
+        logging.info('Voice message successfully processed and sent.')
     except TelegramError as tg_err:
         logging.error(f'Telegram API error: {tg_err}')
         await context.bot.send_message(chat_id=chat_id, text=f'Произошла ошибка: {tg_err}')
