@@ -7,15 +7,16 @@ from pydub import AudioSegment
 from pydub.exceptions import CouldntDecodeError
 from telegram import Update
 from telegram.error import TelegramError
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import (ApplicationBuilder, CommandHandler, ContextTypes,
+                          MessageHandler, filters)
 
 load_dotenv()
 
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-MODEL = os.getenv('MODEL')
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+MODEL = os.getenv("MODEL")
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-OGG_PATH = os.path.join(BASE_DIR, 'voice', 'oog', 'voice_note.ogg')
-WAV_PATH = os.path.join(BASE_DIR, 'voice', 'wav', 'voice_note.wav')
+OGG_PATH = os.path.join(BASE_DIR, "voice", "oog", "voice_note.ogg")
+WAV_PATH = os.path.join(BASE_DIR, "voice", "wav", "voice_note.wav")
 
 
 def create_dirs() -> None:
@@ -42,7 +43,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     await context.bot.send_message(
         chat_id=chat_id,
-        text='Привет! Пришли мне войс или добавь в чат, и я переведу голосовое сообщение в текст.'
+        text="Привет! Пришли мне войс или добавь в чат, и я переведу голосовое сообщение в текст.",
     )
 
 
@@ -70,24 +71,26 @@ async def get_voice_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         await file.download_to_drive(custom_path=OGG_PATH)
         conversion_message = await context.bot.send_message(
             chat_id=chat_id,
-            text=f'Голосовое сообщение конвертируется. Пожалуйста, ожидайте, это может занять некоторое время...'
+            text="Голосовое сообщение конвертируется. Пожалуйста, ожидайте, это может занять некоторое время...",
         )
 
         transcription_text = audio_to_text()
         if update.effective_message.forward_origin.sender_user.first_name:
-            sender=update.effective_message.forward_origin.sender_user.first_name
+            sender = update.effective_message.forward_origin.sender_user.first_name
         else:
             sender = update.effective_chat.first_name
 
         await context.bot.edit_message_text(
             chat_id=chat_id,
             message_id=conversion_message.message_id,
-            text=f'Голосовое сообщение от пользователя {sender}: \n\n"{transcription_text}"'
+            text=f'Голосовое сообщение от пользователя {sender}: \n\n"{transcription_text}"',
         )
-        logging.info('Voice message successfully processed and sent.')
+        logging.info("Voice message successfully processed and sent.")
     except TelegramError as tg_err:
-        logging.error(f'Telegram API error: {tg_err}')
-        await context.bot.send_message(chat_id=chat_id, text=f'Произошла ошибка: {tg_err}')
+        logging.error(f"Telegram API error: {tg_err}")
+        await context.bot.send_message(
+            chat_id=chat_id, text=f"Произошла ошибка: {tg_err}"
+        )
     finally:
         cleanup_files(OGG_PATH, WAV_PATH)
 
@@ -107,17 +110,17 @@ def ogg_to_wav() -> str:
     try:
         audio = AudioSegment.from_ogg(OGG_PATH)
         audio = audio.set_channels(1)
-        audio.export(WAV_PATH, format='wav', codec='pcm_s16le')
-        logging.info('Successfully converted audio file from oog to wav.')
+        audio.export(WAV_PATH, format="wav", codec="pcm_s16le")
+        logging.info("Successfully converted audio file from oog to wav.")
         return WAV_PATH
     except FileNotFoundError as fnf_err:
-        logging.error(f'File in path {OGG_PATH} is not found: {fnf_err}')
+        logging.error(f"File in path {OGG_PATH} is not found: {fnf_err}")
         raise fnf_err
     except CouldntDecodeError as decode_err:
-        logging.error(f'Could not decode OGG file {decode_err}')
+        logging.error(f"Could not decode OGG file {decode_err}")
         raise decode_err
     except OSError as os_err:
-        logging.error(f'OS error during file conversion: {os_err}')
+        logging.error(f"OS error during file conversion: {os_err}")
         raise os_err
 
 
@@ -136,21 +139,21 @@ def audio_to_text() -> str:
     """
     try:
         model = whisper.load_model(MODEL)
-        result = model.transcribe(ogg_to_wav(), language='ru', fp16=False)['text']
-        logging.info(f'Successfully transcribed audio to text.')
+        result = model.transcribe(ogg_to_wav(), language="ru", fp16=False)["text"]
+        logging.info("Successfully transcribed audio to text.")
         return result
 
     except FileNotFoundError as fnf_err:
-        logging.error(f'Audio file not found: : {fnf_err}')
+        logging.error(f"Audio file not found: : {fnf_err}")
         raise fnf_err
     except RuntimeError as runtime_err:
-        logging.error(f'Runtime error during Whisper processing: {runtime_err}')
+        logging.error(f"Runtime error during Whisper processing: {runtime_err}")
         raise runtime_err
     except ValueError as value_err:
-        logging.error(f'Value error during model invocation: {value_err}')
+        logging.error(f"Value error during model invocation: {value_err}")
         raise value_err
     except ImportError as import_err:
-        logging.error(f'Import error: {import_err}')
+        logging.error(f"Import error: {import_err}")
         raise import_err
 
 
@@ -166,26 +169,26 @@ def cleanup_files(*file_paths):
         try:
             if os.path.exists(path):
                 os.remove(path)
-                logging.info(f'Successfully deleted file: {path}')
+                logging.info(f"Successfully deleted file: {path}")
         except OSError as error:
-            logging.error(f'Error while deleting file {path}: {error}')
+            logging.error(f"Error while deleting file {path}: {error}")
             raise error
 
 
 def main() -> None:
     logging.basicConfig(
-        encoding='utf-8',
+        encoding="utf-8",
         level=logging.DEBUG,
-        filename='./logs/main.log',
-        filemode='w',
-        format='%(asctime)s - %(levelname)s - %(message)s - %(name)s'
+        filename="./logs/main.log",
+        filemode="w",
+        format="%(asctime)s - %(levelname)s - %(message)s - %(name)s",
     )
 
     create_dirs()
 
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-    starting = CommandHandler('start', start)
+    starting = CommandHandler("start", start)
     forwarded_voice = MessageHandler(filters.FORWARDED, get_voice_message)
     chat_voice = MessageHandler(filters.VOICE, get_voice_message)
 
@@ -196,5 +199,5 @@ def main() -> None:
     application.run_polling()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
